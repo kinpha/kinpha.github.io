@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKR Forum - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <link rel="shortcut icon" type="image/x-icon" href="" />
+        <h1><a href="index.html">SKR<span style="color:rgb(43, 153, 255);">Forum</span> </a></h1>
+    </header>
+
+    <div class="container">
+        
+        <div class="navigation-bar">
+            <h2 id="view-title">Recent Discussions</h2>
+            <a href="upload.html" class="btn-link">+ Create & Manage Posts</a>
+        </div>
+
+        <div id="feed-view">
+            <div id="posts-container"></div>
+        </div>
+
+        <div id="post-detail-view" style="display: none;">
+            <button class="btn-link btn-secondary" style="margin-bottom: 20px;" onclick="closePost()">← Back to Feed</button>
+            <div class="full-post" id="full-post-container"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let posts = [];
+        const postsContainer = document.getElementById('posts-container');
+        const feedView = document.getElementById('feed-view');
+        const postDetailView = document.getElementById('post-detail-view');
+        const fullPostContainer = document.getElementById('full-post-container');
+        const viewTitle = document.getElementById('view-title');
+
+        async function loadPosts() {
+            // Check if there are updated posts saved locally in this browser session
+            const localPosts = localStorage.getItem('skr_local_changes');
+            
+            if (localPosts) {
+                posts = JSON.parse(localPosts);
+                renderPostsList();
+            } else {
+                // If no local alterations, try to fetch fresh from HSS.json
+                try {
+                    const response = await fetch('HSS.json');
+                    if (!response.ok) throw new Error();
+                    posts = await response.json();
+                    localStorage.setItem('skr_local_changes', JSON.stringify(posts));
+                    renderPostsList();
+                } catch (err) {
+                    postsContainer.innerHTML = '<p style="color: var(--error-color);">Failed to load posts automatic layout. Please visit the upload page to import HSS.json manually.</p>';
+                }
+            }
+        }
+
+        function renderPostsList() {
+            if (posts.length === 0) {
+                postsContainer.innerHTML = '<p style="color: var(--text-muted);">No threads found.</p>';
+                return;
+            }
+            postsContainer.innerHTML = posts.map(post => `
+                <div class="post-card" onclick="viewPost(${post.id})">
+                    <h3>${escapeHTML(post.title)}</h3>
+                    <div class="post-meta">Posted: ${post.date}</div>
+                </div>
+            `).join('');
+        }
+
+        function viewPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            feedView.style.display = 'none';
+            document.querySelector('.navigation-bar').style.display = 'none';
+            postDetailView.style.display = 'block';
+
+            fullPostContainer.innerHTML = `
+                <h2>${escapeHTML(post.title)}</h2>
+                <div class="post-meta">Published: ${post.date}</div>
+                <div class="post-content">${escapeHTML(post.content)}</div>
+            `;
+        }
+
+        function closePost() {
+            postDetailView.style.display = 'none';
+            feedView.style.display = 'block';
+            document.querySelector('.navigation-bar').style.display = 'flex';
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        // Initialize
+        loadPosts();
+    </script>
+</body>
+</html>

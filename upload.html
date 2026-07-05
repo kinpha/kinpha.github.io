@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKR Forum - Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1><a href="index.html">SKR<span style="color:rgb(43, 153, 255);">Forum</span> </a></h1>
+    </header>
+
+    <div class="container">
+        
+        <div class="navigation-bar">
+            <h2>Management Panel</h2>
+            <a href="index.html" class="btn-link btn-secondary">← Back to Main Forum</a>
+        </div>
+        <div class="post-form">
+            <h2>Create a New Post</h2>
+            <form id="create-post-form">
+                <label for="post-title">Title</label>
+                <input type="text" id="post-title" placeholder="What's on your mind?" required>
+                
+                <label for="post-content">Content</label>
+                <textarea id="post-content" placeholder="Share your thoughts..." required></textarea>
+                
+                <button type="submit">Publish Post</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        let posts = JSON.parse(localStorage.getItem('skr_local_changes')) || [];
+
+        // Update status label on load
+        const syncStatus = document.getElementById('sync-status');
+        if(posts.length > 0) {
+            syncStatus.textContent = `${posts.length} posts loaded in active cache`;
+            syncStatus.style.color = "var(--secondary-color)";
+        }
+
+        // Handle Submission 
+        document.getElementById('create-post-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const titleInput = document.getElementById('post-title');
+            const contentInput = document.getElementById('post-content');
+
+            const newPost = {
+                id: Date.now(),
+                title: titleInput.value,
+                content: contentInput.value,
+                date: new Date().toLocaleDateString(undefined, { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            };
+
+            posts.unshift(newPost);
+            localStorage.setItem('skr_local_changes', JSON.stringify(posts));
+            
+            titleInput.value = '';
+            contentInput.value = '';
+
+            syncStatus.textContent = `${posts.length} posts inside live cache`;
+            syncStatus.style.color = "var(--secondary-color)";
+            alert("Post added! Click 'Export HSS.json' to update your permanent data file.");
+        });
+
+        // Handle Manual File Upload/Import
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+                    if (Array.isArray(parsedData)) {
+                        posts = parsedData;
+                        localStorage.setItem('skr_local_changes', JSON.stringify(posts));
+                        syncStatus.textContent = "Import Successful!";
+                        syncStatus.style.color = "var(--secondary-color)";
+                        alert("Successfully imported " + posts.length + " posts into the system memory panel!");
+                    } else {
+                        alert("Invalid file format: JSON must be an array of posts.");
+                    }
+                } catch (err) {
+                    alert("Error parsing JSON file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Export data back into a download ready HSS.json file
+        function exportToJSON() {
+            if (posts.length === 0) {
+                alert("No data available to export.");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(posts, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "HSS.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1719792000000,
+        "title": "Welcome to SKR Forum!",
+        "content": "This forum is now connected with HSS.json. You can read posts from the JSON file, add new posts, and export the updated data back into HSS.json!",
+        "date": "Jul 5, 2026, 07:20 AM"
+    },
+    {
+        "id": 1719792100000,
+        "title": "How to run this locally",
+        "content": "Because modern browsers block loading local files (CORS policy) when opening an HTML file directly (file://), it's best to run a quick local server. \n\nYou can open your terminal in this folder and type:\npython -m http.server\n\nThen visit http://localhost:8000 in your browser!",
+        "date": "Jul 5, 2026, 07:25 AM"
+    }
+]
